@@ -1,4 +1,5 @@
 const InventoryModel = require('../models/Inventory');
+const redisClient = require('../utils/redisClient');
 
 class InventoryController {
     static async createItem(req, res) {
@@ -7,6 +8,9 @@ class InventoryController {
 
             const item = { itemId, name, quantity, price };
             await InventoryModel.createItem(item);
+
+            // Remove item from cache if it exists
+            await redisClient.del(`inventory:${itemId}`);
 
             res.status(201).json({ message: 'Item created successfully' });
         } catch (err) {
@@ -18,8 +22,20 @@ class InventoryController {
         try {
             const { itemId } = req.params;
 
+            // Check Redis cache first
+            const cachedItem = await redisClient.get(`inventory:${itemId}`);
+            if (cachedItem) {
+                return res.status(200).json(JSON.parse(cachedItem));
+            }
+
+            // Fetch item from DynamoDB if not cached
             const item = (await InventoryModel.getItemById(itemId)).Item;
             if (!item) return res.status(404).json({ message: 'Item not found' });
+
+            // Cache the item in Redis
+            await redisClient.set(`inventory:${itemId}`, JSON.stringify(item), {
+                EX: 3600, // Cache for 1 hour
+            });
 
             res.status(200).json(item);
         } catch (err) {
@@ -34,6 +50,12 @@ class InventoryController {
 
             await InventoryModel.updateItem(itemId, updates);
 
+            // Update cache
+            const updatedItem = (await InventoryModel.getItemById(itemId)).Item;
+            await redisClient.set(`inventory:${itemId}`, JSON.stringify(updatedItem), {
+                EX: 3600,
+            });
+
             res.status(200).json({ message: 'Item updated successfully' });
         } catch (err) {
             res.status(500).json({ message: 'Error updating item', error: err.message });
@@ -45,6 +67,9 @@ class InventoryController {
             const { itemId } = req.params;
 
             await InventoryModel.deleteItem(itemId);
+
+            // Remove from cache
+            await redisClient.del(`inventory:${itemId}`);
 
             res.status(200).json({ message: 'Item deleted successfully' });
         } catch (err) {
