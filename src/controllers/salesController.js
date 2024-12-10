@@ -1,10 +1,11 @@
+const redisClient = require('../utils/redisClient');
 const SalesModel = require('../models/Sales');
 const InventoryModel = require('../models/Inventory');
 
 class SalesController {
     static async createSale(req, res) {
         try {
-            const { saleId, itemId, quantity, salesPerson, customerName } = req.body;
+            const { itemId, quantity, salesPerson, customerName } = req.body;
 
             // Fetch the item from the inventory
             const item = (await InventoryModel.getItemById(itemId)).Item;
@@ -19,11 +20,14 @@ class SalesController {
             const updatedQuantity = item.quantity - quantity;
             await InventoryModel.updateItem(itemId, { quantity: updatedQuantity });
 
+            // Get next saleId from Redis
+            const saleId = await redisClient.incr('saleIdCounter');
+
             // Record the sale
-            const sale = { saleId, itemId, quantity, salesPerson, customerName };
+            const sale = { saleId: `sale${saleId}`, itemId, quantity, salesPerson, customerName };
             await SalesModel.createSale(sale);
 
-            res.status(201).json({ message: 'Sale recorded successfully' });
+            res.status(201).json({ message: 'Sale recorded successfully', saleId: sale.saleId });
         } catch (err) {
             res.status(500).json({ message: 'Error recording sale', error: err.message });
         }
