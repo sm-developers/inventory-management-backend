@@ -44,6 +44,7 @@ class AuthController {
 
             res.status(200).json({ message: 'Login successful', token });
         } catch (err) {
+            console.error('Error in login:', err.message);
             res.status(500).json({ message: 'Error logging in', error: err.message });
         }
     }
