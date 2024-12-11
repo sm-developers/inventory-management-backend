@@ -15,7 +15,6 @@ redisClient.on('error', (err) => console.error('Redis Client Error', err));
 async function blacklistToken(token, expiryInSeconds) {
     try {
         await redisClient.set(`blacklist:${token}`, 'true', { EX: expiryInSeconds });
-        console.log(`Token blacklisted: ${token}`);
     } catch (err) {
         console.error('Error blacklisting token:', err.message);
     }
