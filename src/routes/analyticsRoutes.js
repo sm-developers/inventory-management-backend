@@ -63,4 +63,49 @@ router.get('/low-stock', authenticate, authorize('admin', 'inventoryManager'), A
  */
 router.get('/inventory-value', authenticate, authorize('admin'), AnalyticsController.getInventoryValue);
 
+/**
+ * @swagger
+ * /api/analytics/export-sales:
+ *   get:
+ *     summary: Export sales report as CSV
+ *     tags:
+ *       - Analytics
+ *     responses:
+ *       200:
+ *         description: Successfully exported sales report
+ *       500:
+ *         description: Error exporting sales report
+ */
+router.get('/export-sales', authenticate, authorize('admin'), AnalyticsController.exportSalesReport);
+
+/**
+ * @swagger
+ * /api/analytics/export-inventory:
+ *   get:
+ *     summary: Export inventory report as CSV
+ *     tags:
+ *       - Analytics
+ *     responses:
+ *       200:
+ *         description: Successfully exported inventory report
+ *       500:
+ *         description: Error exporting inventory report
+ */
+router.get('/export-inventory', authenticate, authorize('admin', 'inventoryManager'), AnalyticsController.exportInventoryReport);
+
+/**
+ * @swagger
+ * /api/analytics/notify-low-stock:
+ *   get:
+ *     summary: Notify inventory managers about low-stock items
+ *     tags:
+ *       - Notifications
+ *     responses:
+ *       200:
+ *         description: Notification sent successfully
+ *       500:
+ *         description: Error sending notification
+ */
+router.get('/notify-low-stock', authenticate, authorize('admin', 'inventoryManager'), AnalyticsController.notifyLowStock);
+
 module.exports = router;
