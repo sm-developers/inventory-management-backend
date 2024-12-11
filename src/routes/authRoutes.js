@@ -61,4 +61,21 @@ router.post('/register', authenticate, authorize('admin'), AuthController.regist
  */
 router.post('/login', AuthController.login);
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout the user by invalidating the token
+ *     tags:
+ *       - Authentication
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       400:
+ *         description: No token provided
+ *       500:
+ *         description: Error logging out
+ */
+router.post('/logout', authenticate, AuthController.logout);
+
 module.exports = router;

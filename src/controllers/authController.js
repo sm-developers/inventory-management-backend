@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const UserModel = require('../models/Users');
+const { blacklistToken } = require('../utils/redisClient');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -46,6 +47,28 @@ class AuthController {
         } catch (err) {
             console.error('Error in login:', err.message);
             res.status(500).json({ message: 'Error logging in', error: err.message });
+        }
+    }
+
+    static async logout(req, res) {
+        try {
+            const token = req.headers.authorization?.split(' ')[1];
+            if (!token) return res.status(400).json({ message: 'No token provided' });
+
+            // Decode the token to find expiry
+            const decoded = jwt.decode(token);
+            if (!decoded || !decoded.exp) {
+                return res.status(400).json({ message: 'Invalid token' });
+            }
+
+            const expiryInSeconds = decoded.exp - Math.floor(Date.now() / 1000);
+            if (expiryInSeconds > 0) {
+                await blacklistToken(token, expiryInSeconds);
+            }
+
+            res.status(200).json({ message: 'Logout successful' });
+        } catch (err) {
+            res.status(500).json({ message: 'Error logging out', error: err.message });
         }
     }
 }

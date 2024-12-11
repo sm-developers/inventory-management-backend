@@ -12,4 +12,23 @@ redisClient.on('error', (err) => console.error('Redis Client Error', err));
     await redisClient.connect();
 })();
 
-module.exports = redisClient;
+async function blacklistToken(token, expiryInSeconds) {
+    try {
+        await redisClient.set(`blacklist:${token}`, 'true', { EX: expiryInSeconds });
+        console.log(`Token blacklisted: ${token}`);
+    } catch (err) {
+        console.error('Error blacklisting token:', err.message);
+    }
+}
+
+async function isTokenBlacklisted(token) {
+    try {
+        const result = await redisClient.get(`blacklist:${token}`);
+        return !!result; // Returns true if the token is blacklisted
+    } catch (err) {
+        console.error('Error checking token blacklist:', err.message);
+        return false;
+    }
+}
+
+module.exports = { redisClient, blacklistToken, isTokenBlacklisted };
