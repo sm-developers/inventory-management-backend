@@ -48,6 +48,13 @@ class InventoryModel {
         };
         return dynamoDB.delete(params).promise();
     }
+
+    static async getAllItems() {
+        const params = {
+            TableName: 'Inventory',
+        };
+        return dynamoDB.scan(params).promise();
+    }
 }
 
 module.exports = InventoryModel;
