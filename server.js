@@ -10,6 +10,15 @@ const salesRoutes = require('./src/routes/salesRoutes');
 dotenv.config();
 const app = express();
 
+// Configure CORS dynamically
+const corsOptions = {
+    origin: process.env.CORS_ORIGIN || '*', // Default to allow all if not specified
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true, // Allow credentials
+};
+
+app.use(cors(corsOptions));
+
 app.use(bodyParser.json());
 app.use(cors());
 app.use('/api/auth', authRoutes);
